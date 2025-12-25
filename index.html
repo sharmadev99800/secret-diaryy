@@ -4,225 +4,231 @@
 <meta charset="UTF-8">
 <title>Secret Diary</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
-body {
-  font-family: 'Arial', sans-serif;
-  background: #f4f4f9;
-  margin: 0;
-  padding: 20px;
-  color: #333;
-}
-h1,h2 {
-  text-align:center;
-  color:#444;
-}
-.box {
-  background:#fff;
-  padding:20px;
-  border-radius:12px;
-  max-width:600px;
-  margin:auto;
-  margin-bottom:20px;
-  box-shadow:0 8px 15px rgba(0,0,0,0.1);
-}
-button {
-  padding:10px 20px;
-  margin:5px;
-  border:none;
-  border-radius:8px;
-  background:linear-gradient(45deg,#6a11cb,#2575fc);
-  color:white;
-  font-size:16px;
-  cursor:pointer;
-  transition:0.3s;
-}
-button:hover {
-  transform:scale(1.05);
-  opacity:0.9;
-}
-#hint {
-  margin:10px 0;
-  color:#555;
-  font-style:italic;
-  text-align:center;
-}
-.note-folder, .note-item-btn {
-  margin:10px 0;
-  padding:10px;
-  border:1px solid #ddd;
-  border-radius:8px;
-  background:#f8f8f8;
-  cursor:pointer;
-  text-align:left;
-}
-.note-folder:hover, .note-item-btn:hover {
-  background:#e0e0ff;
-}
-.note-content {
-  margin:10px 0;
-  padding:10px;
-  background:#f0f0ff;
-  border-radius:8px;
-}
+  body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #fdfbfb, #ebedee);
+    padding: 20px;
+  }
+
+  .box {
+    max-width: 520px;
+    background: white;
+    margin: auto;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  }
+
+  h2 {
+    text-align: center;
+  }
+
+  .option {
+    display: block;
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 8px;
+    background: #f2f2f2;
+    cursor: pointer;
+  }
+
+  button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 12px;
+    border: none;
+    border-radius: 8px;
+    background: #333;
+    color: white;
+    font-size: 16px;
+  }
+
+  button:disabled {
+    background: #999;
+  }
+
+  .hint {
+    font-size: 14px;
+    color: #666;
+    margin-top: 10px;
+  }
+
+  .feedback {
+    font-weight: bold;
+    margin-top: 10px;
+  }
+
+  .correct {
+    color: green;
+  }
+
+  .wrong {
+    color: red;
+  }
+
+  .folder button {
+    background: #555;
+  }
 </style>
 </head>
+
 <body>
 
-<div class="box" id="quiz-container">
-  <h1>Answer to Unlock</h1>
-  <div id="question-area"></div>
-  <div id="hint"></div>
-  <button id="next-btn">Next</button>
+<!-- QUIZ -->
+<div class="box" id="quizBox">
+  <h2 id="questionTitle"></h2>
+  <div id="options"></div>
+  <p class="hint" id="hintText"></p>
+
+  <p class="feedback" id="feedback"></p>
+
+  <button onclick="verifyAnswer()">Verify Answer</button>
+  <button onclick="nextQuestion()" id="nextBtn" style="display:none;">Next Question</button>
 </div>
 
-<div class="box" id="main-container" style="display:none;">
-  <h2>Ik if you ever get access to view this, you know me well… 😌</h2>
-  <p>Thanks for answering all the pretty questions. This is my personal space. Enjoy exploring!</p>
-  <button onclick="showSection('notes')">Notes</button>
-  <button onclick="showSection('voices')">Voice Messages</button>
-</div>
+<!-- DIARY -->
+<div class="box" id="diaryBox" style="display:none;">
+  <h2>Welcome 🌙</h2>
+  <p>
+    If you ever got access to this, you already know me well.
+    Thanks for answering all the pretty questions 😌  
+    Some memories don’t fade… they just stay quietly.
+  </p>
 
-<div class="box" id="notes-section" style="display:none;">
-  <h2>My Notes</h2>
-  <div id="folders"></div>
-  <div id="note-content-area"></div>
-  <button onclick="backToMain()">Back</button>
-</div>
+  <button onclick="showSection('notes')">📁 Notes</button>
+  <button onclick="showSection('voice')">🎧 Voice Messages</button>
 
-<div class="box" id="voices-section" style="display:none;">
-  <h2>Voice Messages</h2>
-  <div id="voices"></div>
-  <button onclick="backToMain()">Back</button>
+  <!-- NOTES -->
+  <div id="notes" style="display:none;">
+    <h3>Notes Folder</h3>
+
+    <div class="folder">
+      <button onclick="toggle('note1')">🌸 First Memories</button>
+      <p id="note1" style="display:none;">
+        These are the days when everything felt light.
+        Conversations that lasted hours.
+        Silence that still felt warm.
+        Some people become memories without trying.
+      </p>
+    </div>
+
+    <div class="folder">
+      <button onclick="toggle('note2')">🌙 Unsaid Things</button>
+      <p id="note2" style="display:none;">
+        There were words I never said.
+        Not because I couldn’t,
+        but because some feelings deserve quiet.
+        If you’re reading this… you already know.
+      </p>
+    </div>
+  </div>
+
+  <!-- VOICE -->
+  <div id="voice" style="display:none;">
+    <h3>Voice Messages</h3>
+    <audio controls src="voice1.mp3"></audio>
+    <audio controls src="voice2.mp3"></audio>
+  </div>
 </div>
 
 <script>
-// ------------------ TRACK VISITS ------------------
-fetch('https://api.countapi.xyz/hit/secret-diary-unique/visits')
-  .then(res => res.json())
-  .then(data => console.log('Total visits:', data.value));
-
-// ------------------ QUIZ DATA ------------------
-const quizQuestions = [
-  { q:"What is my favorite color?", a:"Blue", hint:"It's the color of the sky." },
-  { q:"What is my favorite food?", a:"Pizza", hint:"Think cheesy and round!" },
-  { q:"Where was I born?", a:"City B", hint:"Second city in the list." },
-  { q:"My favorite animal?", a:"Dog", hint:"Man's best friend." },
-  { q:"My favorite hobby?", a:"Gaming", hint:"Something you do on console or PC." }
+const questions = [
+  {
+    q: "What was my favorite color?",
+    options: ["Red", "Blue", "Black", "White"],
+    answer: "Blue",
+    hint: "You once noticed it."
+  },
+  {
+    q: "What did I value the most?",
+    options: ["Money", "Time", "People", "Dreams"],
+    answer: "People",
+    hint: "Not things."
+  },
+  {
+    q: "What kind of nights I liked?",
+    options: ["Party", "Silence", "Sleep", "Noise"],
+    answer: "Silence",
+    hint: "Peace mattered."
+  },
+  {
+    q: "What hurt me the most?",
+    options: ["Words", "Distance", "Lies", "Time"],
+    answer: "Distance",
+    hint: "Slowly."
+  },
+  {
+    q: "Why is this diary locked?",
+    options: ["Fun", "Ego", "Trust", "Curiosity"],
+    answer: "Trust",
+    hint: "You earned it."
+  }
 ];
 
-let currentQuestion = 0;
-let correctAnswers = 0;
+let index = 0;
 
-// ------------------ NOTES DATA ------------------
-const notesData = {
-  "Folder 1": [
-    "This is note 1 in folder 1. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-    "This is note 2 in folder 1. Curabitur pretium tincidunt lacus. Nulla gravida orci a odio."
-  ],
-  "Folder 2": [
-    "This is note 1 in folder 2. Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    "This is note 2 in folder 2. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-  ]
-};
+function loadQuestion() {
+  document.getElementById("questionTitle").innerText =
+    `Question ${index + 1} of ${questions.length}: ${questions[index].q}`;
 
-// ------------------ VOICES DATA ------------------
-const voicesData = [
-  { label:"Voice 1", src:"voice1.mp3" },
-  { label:"Voice 2", src:"voice2.mp3" }
-];
+  document.getElementById("options").innerHTML =
+    questions[index].options.map(o =>
+      `<label class="option">
+        <input type="radio" name="opt" value="${o}"> ${o}
+      </label>`
+    ).join("");
 
-// ------------------ QUIZ FUNCTIONS ------------------
-function showQuestion(){
-  const questionObj = quizQuestions[currentQuestion];
-  const area = document.getElementById('question-area');
-  area.innerHTML = `<p>${questionObj.q}</p>
-  <input type="text" id="answer" placeholder="Type your answer here" style="width:100%;padding:8px;border-radius:5px;border:1px solid #ccc;">`;
-  document.getElementById('hint').innerText = questionObj.hint + ` (${quizQuestions.length - currentQuestion} questions left)`;
+  document.getElementById("hintText").innerText =
+    "Hint: " + questions[index].hint;
+
+  document.getElementById("feedback").innerText = "";
+  document.getElementById("nextBtn").style.display = "none";
 }
 
-document.getElementById('next-btn').addEventListener('click', ()=>{
-  const answer = document.getElementById('answer').value.trim();
-  if(answer.toLowerCase() === quizQuestions[currentQuestion].a.toLowerCase()){
-    correctAnswers++;
-  }
-  currentQuestion++;
-  if(currentQuestion < quizQuestions.length){
-    showQuestion();
-  }else{
-    if(correctAnswers >= 5){
-      document.getElementById('quiz-container').style.display='none';
-      document.getElementById('main-container').style.display='block';
-    }else{
-      alert(`You got ${correctAnswers} correct. Need at least 5 to unlock. Reload to try again!`);
-    }
-  }
-});
+function verifyAnswer() {
+  const selected = document.querySelector('input[name="opt"]:checked');
+  const feedback = document.getElementById("feedback");
 
-// ------------------ MAIN FUNCTIONS ------------------
-function showSection(sec){
-  document.getElementById('main-container').style.display='none';
-  if(sec==='notes'){
-    document.getElementById('notes-section').style.display='block';
-    loadFolders();
-  }else if(sec==='voices'){
-    document.getElementById('voices-section').style.display='block';
-    loadVoices();
+  if (!selected) {
+    feedback.innerText = "Select an answer first.";
+    feedback.className = "feedback wrong";
+    return;
+  }
+
+  if (selected.value === questions[index].answer) {
+    feedback.innerText = "Correct answer ✔️";
+    feedback.className = "feedback correct";
+    document.getElementById("nextBtn").style.display = "block";
+  } else {
+    feedback.innerText = "Wrong answer ❌ Try again.";
+    feedback.className = "feedback wrong";
   }
 }
-function backToMain(){
-  document.getElementById('notes-section').style.display='none';
-  document.getElementById('voices-section').style.display='none';
-  document.getElementById('main-container').style.display='block';
+
+function nextQuestion() {
+  index++;
+  if (index >= questions.length) {
+    document.getElementById("quizBox").style.display = "none";
+    document.getElementById("diaryBox").style.display = "block";
+  } else {
+    loadQuestion();
+  }
 }
 
-// ------------------ NOTES FUNCTIONS ------------------
-function loadFolders(){
-  const container = document.getElementById('folders');
-  const contentArea = document.getElementById('note-content-area');
-  contentArea.innerHTML = '';
-  container.innerHTML = '';
-  Object.keys(notesData).forEach(folder=>{
-    const btn = document.createElement('div');
-    btn.className = 'note-folder';
-    btn.innerText = folder;
-    btn.onclick = ()=>loadNotes(folder);
-    container.appendChild(btn);
-  });
+function showSection(id) {
+  document.getElementById("notes").style.display = "none";
+  document.getElementById("voice").style.display = "none";
+  document.getElementById(id).style.display = "block";
 }
 
-function loadNotes(folder){
-  const container = document.getElementById('folders');
-  const contentArea = document.getElementById('note-content-area');
-  container.innerHTML = `<button onclick="loadFolders()">Back to Folders</button>`;
-  contentArea.innerHTML = '';
-  notesData[folder].forEach((note,i)=>{
-    const btn = document.createElement('div');
-    btn.className = 'note-item-btn';
-    btn.innerText = `Note ${i+1}`;
-    btn.onclick = ()=>showNoteContent(note);
-    contentArea.appendChild(btn);
-  });
+function toggle(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === "none" ? "block" : "none";
 }
 
-function showNoteContent(note){
-  const contentArea = document.getElementById('note-content-area');
-  contentArea.innerHTML = `<div class="note-content">${note}</div>`;
-}
-
-// ------------------ VOICES FUNCTIONS ------------------
-function loadVoices(){
-  const container = document.getElementById('voices');
-  container.innerHTML = '';
-  voicesData.forEach(v=>{
-    const btn = document.createElement('button');
-    btn.innerText = v.label;
-    btn.onclick = ()=>{ new Audio(v.src).play(); }
-    container.appendChild(btn);
-  });
-}
-
-// ------------------ INIT ------------------
-showQuestion();
+loadQuestion();
 </script>
 
 </body>
