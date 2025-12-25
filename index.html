@@ -46,6 +46,24 @@ button:hover {
   font-style:italic;
   text-align:center;
 }
+.note-folder, .note-item-btn {
+  margin:10px 0;
+  padding:10px;
+  border:1px solid #ddd;
+  border-radius:8px;
+  background:#f8f8f8;
+  cursor:pointer;
+  text-align:left;
+}
+.note-folder:hover, .note-item-btn:hover {
+  background:#e0e0ff;
+}
+.note-content {
+  margin:10px 0;
+  padding:10px;
+  background:#f0f0ff;
+  border-radius:8px;
+}
 </style>
 </head>
 <body>
@@ -67,6 +85,7 @@ button:hover {
 <div class="box" id="notes-section" style="display:none;">
   <h2>My Notes</h2>
   <div id="folders"></div>
+  <div id="note-content-area"></div>
   <button onclick="backToMain()">Back</button>
 </div>
 
@@ -112,7 +131,7 @@ const voicesData = [
   { label:"Voice 2", src:"voice2.mp3" }
 ];
 
-// ------------------ FUNCTIONS ------------------
+// ------------------ QUIZ FUNCTIONS ------------------
 function showQuestion(){
   const questionObj = quizQuestions[currentQuestion];
   const area = document.getElementById('question-area');
@@ -139,7 +158,7 @@ document.getElementById('next-btn').addEventListener('click', ()=>{
   }
 });
 
-// Show notes or voices
+// ------------------ MAIN FUNCTIONS ------------------
 function showSection(sec){
   document.getElementById('main-container').style.display='none';
   if(sec==='notes'){
@@ -156,9 +175,11 @@ function backToMain(){
   document.getElementById('main-container').style.display='block';
 }
 
-// Load folders
+// ------------------ NOTES FUNCTIONS ------------------
 function loadFolders(){
   const container = document.getElementById('folders');
+  const contentArea = document.getElementById('note-content-area');
+  contentArea.innerHTML = '';
   container.innerHTML = '';
   Object.keys(notesData).forEach(folder=>{
     const btn = document.createElement('div');
@@ -169,19 +190,26 @@ function loadFolders(){
   });
 }
 
-// Load notes inside folder
 function loadNotes(folder){
   const container = document.getElementById('folders');
+  const contentArea = document.getElementById('note-content-area');
   container.innerHTML = `<button onclick="loadFolders()">Back to Folders</button>`;
+  contentArea.innerHTML = '';
   notesData[folder].forEach((note,i)=>{
-    const noteDiv = document.createElement('div');
-    noteDiv.className = 'note-item';
-    noteDiv.innerText = note;
-    container.appendChild(noteDiv);
+    const btn = document.createElement('div');
+    btn.className = 'note-item-btn';
+    btn.innerText = `Note ${i+1}`;
+    btn.onclick = ()=>showNoteContent(note);
+    contentArea.appendChild(btn);
   });
 }
 
-// Load voices
+function showNoteContent(note){
+  const contentArea = document.getElementById('note-content-area');
+  contentArea.innerHTML = `<div class="note-content">${note}</div>`;
+}
+
+// ------------------ VOICES FUNCTIONS ------------------
 function loadVoices(){
   const container = document.getElementById('voices');
   container.innerHTML = '';
