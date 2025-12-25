@@ -40,21 +40,11 @@ button:hover {
   transform:scale(1.05);
   opacity:0.9;
 }
-.note-folder, .note-item {
-  margin:10px 0;
-  padding:10px;
-  border:1px solid #ddd;
-  border-radius:8px;
-  background:#f8f8f8;
-  cursor:pointer;
-}
-.note-folder:hover, .note-item:hover {
-  background:#e0e0ff;
-}
 #hint {
   margin:10px 0;
   color:#555;
   font-style:italic;
+  text-align:center;
 }
 </style>
 </head>
@@ -62,9 +52,9 @@ button:hover {
 
 <div class="box" id="quiz-container">
   <h1>Answer to Unlock</h1>
-  <div id="quiz-questions"></div>
-  <div id="hint">You have 5 questions to answer correctly!</div>
-  <button onclick="submitQuiz()">Submit Answers</button>
+  <div id="question-area"></div>
+  <div id="hint"></div>
+  <button id="next-btn">Next</button>
 </div>
 
 <div class="box" id="main-container" style="display:none;">
@@ -94,12 +84,15 @@ fetch('https://api.countapi.xyz/hit/secret-diary-unique/visits')
 
 // ------------------ QUIZ DATA ------------------
 const quizQuestions = [
-  { q:"What is my favorite color?", a:"Blue" },
-  { q:"What is my favorite food?", a:"Pizza" },
-  { q:"Where was I born?", a:"City B" },
-  { q:"My favorite animal?", a:"Dog" },
-  { q:"My favorite hobby?", a:"Gaming" }
+  { q:"What is my favorite color?", a:"Blue", hint:"It's the color of the sky." },
+  { q:"What is my favorite food?", a:"Pizza", hint:"Think cheesy and round!" },
+  { q:"Where was I born?", a:"City B", hint:"Second city in the list." },
+  { q:"My favorite animal?", a:"Dog", hint:"Man's best friend." },
+  { q:"My favorite hobby?", a:"Gaming", hint:"Something you do on console or PC." }
 ];
+
+let currentQuestion = 0;
+let correctAnswers = 0;
 
 // ------------------ NOTES DATA ------------------
 const notesData = {
@@ -120,29 +113,31 @@ const voicesData = [
 ];
 
 // ------------------ FUNCTIONS ------------------
-function initQuiz() {
-  const container = document.getElementById('quiz-questions');
-  container.innerHTML = '';
-  quizQuestions.forEach((item,index)=>{
-    container.innerHTML += `<p>${item.q}</p>
-    <input type="text" id="answer${index}" placeholder="Type your answer here" style="width:100%;padding:8px;border-radius:5px;border:1px solid #ccc;">`;
-  });
+function showQuestion(){
+  const questionObj = quizQuestions[currentQuestion];
+  const area = document.getElementById('question-area');
+  area.innerHTML = `<p>${questionObj.q}</p>
+  <input type="text" id="answer" placeholder="Type your answer here" style="width:100%;padding:8px;border-radius:5px;border:1px solid #ccc;">`;
+  document.getElementById('hint').innerText = questionObj.hint + ` (${quizQuestions.length - currentQuestion} questions left)`;
 }
-function submitQuiz(){
-  let correct = 0;
-  quizQuestions.forEach((item,index)=>{
-    const ans = document.getElementById(`answer${index}`).value.trim();
-    if(ans.toLowerCase() === item.a.toLowerCase()) correct++;
-  });
-  if(correct >= 3){
-    document.getElementById('quiz-container').style.display='none';
-    document.getElementById('main-container').style.display='block';
-  }else{
-    const remaining = quizQuestions.length - correct;
-    document.getElementById('hint').innerText = `You answered ${correct} correctly. ${remaining} left! Keep trying 😉`;
-    alert("Some answers are wrong. Keep trying!");
+
+document.getElementById('next-btn').addEventListener('click', ()=>{
+  const answer = document.getElementById('answer').value.trim();
+  if(answer.toLowerCase() === quizQuestions[currentQuestion].a.toLowerCase()){
+    correctAnswers++;
   }
-}
+  currentQuestion++;
+  if(currentQuestion < quizQuestions.length){
+    showQuestion();
+  }else{
+    if(correctAnswers >= 3){
+      document.getElementById('quiz-container').style.display='none';
+      document.getElementById('main-container').style.display='block';
+    }else{
+      alert(`You got ${correctAnswers} correct. Need at least 3 to unlock. Reload to try again!`);
+    }
+  }
+});
 
 // Show notes or voices
 function showSection(sec){
@@ -199,7 +194,7 @@ function loadVoices(){
 }
 
 // ------------------ INIT ------------------
-initQuiz();
+showQuestion();
 </script>
 
 </body>
