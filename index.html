@@ -16,37 +16,34 @@
     max-width: 520px;
     background: white;
     margin: auto;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    padding: 22px;
+    border-radius: 14px;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.12);
   }
 
-  h2 {
+  h2, h3 {
     text-align: center;
   }
 
-  .option {
-    display: block;
-    padding: 10px;
-    margin: 8px 0;
+  input[type="text"] {
+    width: 100%;
+    padding: 12px;
+    margin-top: 12px;
     border-radius: 8px;
-    background: #f2f2f2;
-    cursor: pointer;
+    border: 1px solid #ccc;
+    font-size: 16px;
   }
 
   button {
     width: 100%;
     padding: 12px;
-    margin-top: 12px;
+    margin-top: 14px;
     border: none;
     border-radius: 8px;
     background: #333;
     color: white;
     font-size: 16px;
-  }
-
-  button:disabled {
-    background: #999;
+    cursor: pointer;
   }
 
   .hint {
@@ -60,16 +57,17 @@
     margin-top: 10px;
   }
 
-  .correct {
-    color: green;
-  }
-
-  .wrong {
-    color: red;
-  }
+  .correct { color: green; }
+  .wrong { color: red; }
 
   .folder button {
     background: #555;
+  }
+
+  p.note {
+    margin-top: 10px;
+    line-height: 1.6;
+    display: none;
   }
 </style>
 </head>
@@ -79,13 +77,16 @@
 <!-- QUIZ -->
 <div class="box" id="quizBox">
   <h2 id="questionTitle"></h2>
-  <div id="options"></div>
-  <p class="hint" id="hintText"></p>
 
+  <input type="text" id="answerInput" placeholder="Type your answer here...">
+
+  <p class="hint" id="hintText"></p>
   <p class="feedback" id="feedback"></p>
 
   <button onclick="verifyAnswer()">Verify Answer</button>
-  <button onclick="nextQuestion()" id="nextBtn" style="display:none;">Next Question</button>
+  <button onclick="nextQuestion()" id="nextBtn" style="display:none;">
+    Next Question
+  </button>
 </div>
 
 <!-- DIARY -->
@@ -101,29 +102,7 @@
   <button onclick="showSection('voice')">🎧 Voice Messages</button>
 
   <!-- NOTES -->
-  <div id="notes" style="display:none;">
-    <h3>Notes Folder</h3>
-
-    <div class="folder">
-      <button onclick="toggle('note1')">🌸 First Memories</button>
-      <p id="note1" style="display:none;">
-        These are the days when everything felt light.
-        Conversations that lasted hours.
-        Silence that still felt warm.
-        Some people become memories without trying.
-      </p>
-    </div>
-
-    <div class="folder">
-      <button onclick="toggle('note2')">🌙 Unsaid Things</button>
-      <p id="note2" style="display:none;">
-        There were words I never said.
-        Not because I couldn’t,
-        but because some feelings deserve quiet.
-        If you’re reading this… you already know.
-      </p>
-    </div>
-  </div>
+  <div id="notes" style="display:none;"></div>
 
   <!-- VOICE -->
   <div id="voice" style="display:none;">
@@ -133,71 +112,44 @@
   </div>
 </div>
 
+<!-- LOAD NOTES FILE -->
+<script src="notes.js"></script>
+
 <script>
 const questions = [
-  {
-    q: "What was my favorite color?",
-    options: ["Red", "Blue", "Black", "White"],
-    answer: "Blue",
-    hint: "You once noticed it."
-  },
-  {
-    q: "What did I value the most?",
-    options: ["Money", "Time", "People", "Dreams"],
-    answer: "People",
-    hint: "Not things."
-  },
-  {
-    q: "What kind of nights I liked?",
-    options: ["Party", "Silence", "Sleep", "Noise"],
-    answer: "Silence",
-    hint: "Peace mattered."
-  },
-  {
-    q: "What hurt me the most?",
-    options: ["Words", "Distance", "Lies", "Time"],
-    answer: "Distance",
-    hint: "Slowly."
-  },
-  {
-    q: "Why is this diary locked?",
-    options: ["Fun", "Ego", "Trust", "Curiosity"],
-    answer: "Trust",
-    hint: "You earned it."
-  }
+  { q: "What was my favorite color?", answer: "blue", hint: "You once noticed it." },
+  { q: "What did I value the most?", answer: "people", hint: "Not things." },
+  { q: "What kind of nights I liked?", answer: "silence", hint: "Peace mattered." },
+  { q: "What hurt me the most?", answer: "distance", hint: "Slowly." },
+  { q: "Why is this diary locked?", answer: "trust", hint: "You earned it." }
 ];
 
 let index = 0;
 
 function loadQuestion() {
-  document.getElementById("questionTitle").innerText =
-    `Question ${index + 1} of ${questions.length}: ${questions[index].q}`;
-
-  document.getElementById("options").innerHTML =
-    questions[index].options.map(o =>
-      `<label class="option">
-        <input type="radio" name="opt" value="${o}"> ${o}
-      </label>`
-    ).join("");
+  document.getElementById("questionTitle").innerHTML =
+    `Question ${index + 1} of ${questions.length}<br><br>${questions[index].q}`;
 
   document.getElementById("hintText").innerText =
     "Hint: " + questions[index].hint;
 
+  document.getElementById("answerInput").value = "";
   document.getElementById("feedback").innerText = "";
   document.getElementById("nextBtn").style.display = "none";
 }
 
 function verifyAnswer() {
-  const selected = document.querySelector('input[name="opt"]:checked');
+  const userAnswer =
+    document.getElementById("answerInput").value.trim().toLowerCase();
   const feedback = document.getElementById("feedback");
 
-  if (!selected) {
-    feedback.innerText = "Select an answer first.";
+  if (!userAnswer) {
+    feedback.innerText = "Please type an answer.";
     feedback.className = "feedback wrong";
     return;
   }
 
-  if (selected.value === questions[index].answer) {
+  if (userAnswer === questions[index].answer) {
     feedback.innerText = "Correct answer ✔️";
     feedback.className = "feedback correct";
     document.getElementById("nextBtn").style.display = "block";
@@ -212,6 +164,7 @@ function nextQuestion() {
   if (index >= questions.length) {
     document.getElementById("quizBox").style.display = "none";
     document.getElementById("diaryBox").style.display = "block";
+    loadNotes();
   } else {
     loadQuestion();
   }
@@ -226,6 +179,25 @@ function showSection(id) {
 function toggle(id) {
   const el = document.getElementById(id);
   el.style.display = el.style.display === "none" ? "block" : "none";
+}
+
+/* LOAD NOTES FROM notes.js */
+function loadNotes() {
+  const container = document.getElementById("notes");
+  container.innerHTML = "<h3>Notes Folder</h3>";
+
+  for (let key in notesData) {
+    container.innerHTML += `
+      <div class="folder">
+        <button onclick="toggle('${key}')">
+          ${notesData[key].title}
+        </button>
+        <p class="note" id="${key}">
+          ${notesData[key].content}
+        </p>
+      </div>
+    `;
+  }
 }
 
 loadQuestion();
