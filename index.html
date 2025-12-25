@@ -1,160 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Secret Diary</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      padding: 15px;
-    }
-    h2 {
-      text-align: center;
-    }
-    .box {
-      background: #fff;
-      padding: 15px;
-      border-radius: 8px;
-      max-width: 500px;
-      margin: auto;
-      margin-bottom: 15px;
-    }
-    textarea {
-      width: 100%;
-      height: 120px;
-      margin-top: 10px;
-      padding: 10px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      font-size: 14px;
-      resize: none;
-    }
-    button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      background: #333;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    button:active {
-      background: #555;
-    }
-    label {
-      cursor: pointer;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Secret Diary</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body {
+  font-family: 'Arial', sans-serif;
+  background: #f4f4f9;
+  margin: 0;
+  padding: 20px;
+  color: #333;
+}
+h1,h2 {
+  text-align:center;
+  color:#444;
+}
+.box {
+  background:#fff;
+  padding:20px;
+  border-radius:12px;
+  max-width:600px;
+  margin:auto;
+  margin-bottom:20px;
+  box-shadow:0 8px 15px rgba(0,0,0,0.1);
+}
+button {
+  padding:10px 20px;
+  margin:5px;
+  border:none;
+  border-radius:8px;
+  background:linear-gradient(45deg,#6a11cb,#2575fc);
+  color:white;
+  font-size:16px;
+  cursor:pointer;
+  transition:0.3s;
+}
+button:hover {
+  transform:scale(1.05);
+  opacity:0.9;
+}
+.note-folder, .note-item {
+  margin:10px 0;
+  padding:10px;
+  border:1px solid #ddd;
+  border-radius:8px;
+  background:#f8f8f8;
+  cursor:pointer;
+}
+.note-folder:hover, .note-item:hover {
+  background:#e0e0ff;
+}
+#hint {
+  margin:10px 0;
+  color:#555;
+  font-style:italic;
+}
+</style>
 </head>
 <body>
 
-  <!-- QUIZ -->
-  <div class="box" id="quiz-container">
-    <h2>Answer to Unlock</h2>
-  </div>
+<div class="box" id="quiz-container">
+  <h1>Answer to Unlock</h1>
+  <div id="quiz-questions"></div>
+  <div id="hint">You have 5 questions to answer correctly!</div>
+  <button onclick="submitQuiz()">Submit Answers</button>
+</div>
 
-  <!-- DIARY -->
-  <div class="box" id="diary-container" style="display:none;">
-    <h2>Secret Diary</h2>
-    <textarea id="note" placeholder="Write your secret here..."></textarea>
-    <input type="file" id="voiceUpload" accept="audio/*">
-    <button onclick="saveNote()">Save</button>
-  </div>
+<div class="box" id="main-container" style="display:none;">
+  <h2>Ik if you ever get access to view this, you know me well… 😌</h2>
+  <p>Thanks for answering all the pretty questions. This is my personal space. Enjoy exploring!</p>
+  <button onclick="showSection('notes')">Notes</button>
+  <button onclick="showSection('voices')">Voice Messages</button>
+</div>
 
-  <!-- Supabase JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
+<div class="box" id="notes-section" style="display:none;">
+  <h2>My Notes</h2>
+  <div id="folders"></div>
+  <button onclick="backToMain()">Back</button>
+</div>
 
-      // ----------------- Replace with your Supabase keys -----------------
-      const SUPABASE_URL = "https://bceqcjlijqtbnzjksyex.supabase.co";
-      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjZXFjamxpanF0Ym56amtzeWV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1OTg1OTYsImV4cCI6MjA4MjE3NDU5Nn0.n3GcwTUaPDnJYFdUuTfADXQ7JlxtBLROILTcoIsliTs";
+<div class="box" id="voices-section" style="display:none;">
+  <h2>Voice Messages</h2>
+  <div id="voices"></div>
+  <button onclick="backToMain()">Back</button>
+</div>
 
-      const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+<script>
+// ------------------ TRACK VISITS ------------------
+fetch('https://api.countapi.xyz/hit/secret-diary-unique/visits')
+  .then(res => res.json())
+  .then(data => console.log('Total visits:', data.value));
 
-      // ----------------- Quiz Questions -----------------
-      const quizQuestions = [
-        { question: "What is my favorite color?", options: ["Red","Blue","Green","Yellow"], answer: "Blue" },
-        { question: "What is my favorite food?", options: ["Pizza","Burger","Pasta","Sushi"], answer: "Pizza" },
-        { question: "Where was I born?", options: ["City A","City B","City C","City D"], answer: "City B" },
-        { question: "My favorite animal?", options: ["Dog","Cat","Bird","Fish"], answer: "Dog" },
-        { question: "My favorite hobby?", options: ["Reading","Gaming","Traveling","Drawing"], answer: "Gaming" }
-      ];
+// ------------------ QUIZ DATA ------------------
+const quizQuestions = [
+  { q:"What is my favorite color?", a:"Blue" },
+  { q:"What is my favorite food?", a:"Pizza" },
+  { q:"Where was I born?", a:"City B" },
+  { q:"My favorite animal?", a:"Dog" },
+  { q:"My favorite hobby?", a:"Gaming" }
+];
 
-      // ----------------- Show Quiz -----------------
-      function showQuiz() {
-        const container = document.getElementById("quiz-container");
-        container.innerHTML = "";
-        quizQuestions.forEach((q, index) => {
-          container.innerHTML += `
-            <p>${q.question}</p>
-            ${q.options.map(opt => `
-              <label>
-                <input type="radio" name="q${index}" value="${opt}"> ${opt}
-              </label><br>
-            `).join("")}
-          `;
-        });
-        container.innerHTML += `<button onclick="checkQuiz()">Submit Quiz</button>`;
-      }
+// ------------------ NOTES DATA ------------------
+const notesData = {
+  "Folder 1": [
+    "This is note 1 in folder 1. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    "This is note 2 in folder 1. Curabitur pretium tincidunt lacus. Nulla gravida orci a odio."
+  ],
+  "Folder 2": [
+    "This is note 1 in folder 2. Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+    "This is note 2 in folder 2. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+  ]
+};
 
-      // ----------------- Check Quiz Answers -----------------
-      window.checkQuiz = function() {
-        let correct = 0;
-        quizQuestions.forEach((q, i) => {
-          const selected = document.querySelector(`input[name=q${i}]:checked`);
-          if (selected && selected.value === q.answer) correct++;
-        });
-        if (correct >= 3) { // Require 3 correct answers
-          document.getElementById("quiz-container").style.display = "none";
-          document.getElementById("diary-container").style.display = "block";
-        } else {
-          alert("Wrong answers. Try again!");
-        }
-      }
+// ------------------ VOICES DATA ------------------
+const voicesData = [
+  { label:"Voice 1", src:"voice1.mp3" },
+  { label:"Voice 2", src:"voice2.mp3" }
+];
 
-      // ----------------- Save Note & Voice -----------------
-      window.saveNote = async function() {
-        const note = document.getElementById("note").value;
-        const voiceFile = document.getElementById("voiceUpload").files[0];
+// ------------------ FUNCTIONS ------------------
+function initQuiz() {
+  const container = document.getElementById('quiz-questions');
+  container.innerHTML = '';
+  quizQuestions.forEach((item,index)=>{
+    container.innerHTML += `<p>${item.q}</p>
+    <input type="text" id="answer${index}" placeholder="Type your answer here" style="width:100%;padding:8px;border-radius:5px;border:1px solid #ccc;">`;
+  });
+}
+function submitQuiz(){
+  let correct = 0;
+  quizQuestions.forEach((item,index)=>{
+    const ans = document.getElementById(`answer${index}`).value.trim();
+    if(ans.toLowerCase() === item.a.toLowerCase()) correct++;
+  });
+  if(correct >= 3){
+    document.getElementById('quiz-container').style.display='none';
+    document.getElementById('main-container').style.display='block';
+  }else{
+    const remaining = quizQuestions.length - correct;
+    document.getElementById('hint').innerText = `You answered ${correct} correctly. ${remaining} left! Keep trying 😉`;
+    alert("Some answers are wrong. Keep trying!");
+  }
+}
 
-        let voiceUrl = null;
+// Show notes or voices
+function showSection(sec){
+  document.getElementById('main-container').style.display='none';
+  if(sec==='notes'){
+    document.getElementById('notes-section').style.display='block';
+    loadFolders();
+  }else if(sec==='voices'){
+    document.getElementById('voices-section').style.display='block';
+    loadVoices();
+  }
+}
+function backToMain(){
+  document.getElementById('notes-section').style.display='none';
+  document.getElementById('voices-section').style.display='none';
+  document.getElementById('main-container').style.display='block';
+}
 
-        if (voiceFile) {
-          const { data, error } = await supabase.storage
-            .from('voices')
-            .upload(`voices/${Date.now()}-${voiceFile.name}`, voiceFile);
+// Load folders
+function loadFolders(){
+  const container = document.getElementById('folders');
+  container.innerHTML = '';
+  Object.keys(notesData).forEach(folder=>{
+    const btn = document.createElement('div');
+    btn.className = 'note-folder';
+    btn.innerText = folder;
+    btn.onclick = ()=>loadNotes(folder);
+    container.appendChild(btn);
+  });
+}
 
-          if (error) {
-            console.error(error);
-            alert("Voice upload failed!");
-            return;
-          }
-          voiceUrl = data.path;
-        }
+// Load notes inside folder
+function loadNotes(folder){
+  const container = document.getElementById('folders');
+  container.innerHTML = `<button onclick="loadFolders()">Back to Folders</button>`;
+  notesData[folder].forEach((note,i)=>{
+    const noteDiv = document.createElement('div');
+    noteDiv.className = 'note-item';
+    noteDiv.innerText = note;
+    container.appendChild(noteDiv);
+  });
+}
 
-        const { data, error } = await supabase.from('Notes').insert([
-          { text: note, voice: voiceUrl }
-        ]);
+// Load voices
+function loadVoices(){
+  const container = document.getElementById('voices');
+  container.innerHTML = '';
+  voicesData.forEach(v=>{
+    const btn = document.createElement('button');
+    btn.innerText = v.label;
+    btn.onclick = ()=>{ new Audio(v.src).play(); }
+    container.appendChild(btn);
+  });
+}
 
-        if (error) {
-          console.error(error);
-          alert("Saving note failed!");
-        } else {
-          alert("Note saved successfully!");
-          document.getElementById("note").value = "";
-          document.getElementById("voiceUpload").value = "";
-        }
-      }
+// ------------------ INIT ------------------
+initQuiz();
+</script>
 
-      // ----------------- Initialize -----------------
-      showQuiz();
-    });
-  </script>
 </body>
 </html>
