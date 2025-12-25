@@ -66,7 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
       voiceUrl = data.path;
     }
 
-    const { data, error } = await supabase.from('notes').insert([
+    const { data, error } = await supabase.from('Notes').insert([
       { text: note, voice: voiceUrl }
     ]);
 
